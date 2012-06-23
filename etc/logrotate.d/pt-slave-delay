@@ -1,0 +1,8 @@
+/var/log/pt-slave-delay.log {
+   rotate 7
+   daily
+   compress
+   postrotate
+      /etc/init.d/pt-slave-delay restart >/dev/null
+   endscript
+}

@@ -1,0 +1,8 @@
+/var/log/pt-kill.log {
+   rotate 7
+   daily
+   compress
+   postrotate
+      /etc/init.d/pt-kill restart >/dev/null
+   endscript
+}
