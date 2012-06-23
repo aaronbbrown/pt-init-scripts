@@ -1,0 +1,1 @@
+export MYSQL_OPTS="--defaults-file=/etc/percona-toolkit/pt-stalk_my.cnf"

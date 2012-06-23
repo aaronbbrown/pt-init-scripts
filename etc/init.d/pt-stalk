@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+### BEGIN INIT INFO
+# Provides:          pt-stalk
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Should-Start:      pt-stalk
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO                                                                                                                                          
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON="/usr/bin/pt-stalk"
+DAEMON_OPTS="--config /etc/percona-toolkit/pt-stalk.conf"
+NAME="pt-stalk"
+DESC="pt-stalk"
+PIDFILE="/var/run/${NAME}.pid"
+STALKHOME="/var/lib/pt-stalk"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/pt-stalk ] && . /etc/default/pt-stalk
+
+. /lib/lsb/init-functions
+
+sig () {
+    test -s "$PIDFILE" && kill -$1 `cat $PIDFILE`
+}
+
+start() {
+  if [[ -z $MYSQL_OPTS ]]; then 
+    HOME=$STALKHOME $DAEMON $DAEMON_OPTS 
+  else
+    HOME=$STALKHOME $DAEMON $DAEMON_OPTS -- $MYSQL_OPTS
+  fi
+  return $?
+}
+
+stop() {
+  if sig TERM; then
+    while sig 0 ; do
+      echo -n "."
+      sleep 1
+    done
+    return 0
+  else
+    echo "$DESC is not running." 
+    return 1
+  fi
+}
+
+status() {
+  if sig 0 ; then
+    echo "$DESC (`cat $PIDFILE`) is running."
+    return 0
+  else
+    echo "$DESC is stopped."
+    return 1
+  fi
+}
+
+case "$1" in
+  start)
+    log_begin_msg "Starting $DESC"
+  	start
+  	log_end_msg $?
+  	;;
+
+  stop)
+  	log_begin_msg "Stopping $DESC"
+  	stop
+  	log_end_msg $?
+  	;;
+  status)
+    status ;;
+
+  restart)
+    log_begin_msg "Restarting $DESC"
+    stop
+    sleep 1
+    start
+    log_end_msg $?
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|status|}" >&2
+    exit 1
+    ;;
+esac
